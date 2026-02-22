@@ -2,6 +2,7 @@ import os
 import logging
 from datetime import datetime
 from dotenv import load_dotenv
+import polars as pl
 
 # Load environment variables from .env file
 load_dotenv()
@@ -71,6 +72,46 @@ POSTGRES_CONF = {
     },
     "write_disposition": os.getenv("POSTGRES_WRITE_DISPOSITION", "append"),
     "driver": os.getenv("POSTGRES_DRIVER", "adbc")
+}
+
+# Schema definitions for destination tables
+MOVIES_DETAILED_SCHEMA = {
+    "movie_title": pl.String,
+    "is_adult": pl.Int16,
+    "runtime_minutes": pl.Int32,
+    "genres": pl.String,
+    "release_year": pl.Int16,
+    "average_rating": pl.Float32,
+    "total_votes": pl.Int32,
+}
+
+RUNTIME_DISTRIBUTION_SCHEMA = {
+    "runtime_bin": pl.String,
+    "total_movies": pl.Int32,
+    "average_rating": pl.Float32,
+    "min_runtime": pl.Int16,
+    "max_runtime": pl.Int32,
+}
+
+YEARLY_AGGREGATES_SCHEMA = {
+    "release_year": pl.Int16,
+    "total_movies": pl.Int32,
+    "average_rating": pl.Float32,
+}
+
+YEAR_GENRE_AGGREGATES_SCHEMA = {
+    "release_year": pl.Int16,
+    "genre": pl.String,
+    "total_movies": pl.Int32,
+    "average_rating": pl.Float32,
+    "total_votes": pl.Int32,
+}
+
+DATA_SCHEMA = {
+    "movies_detailed": MOVIES_DETAILED_SCHEMA,
+    "runtime_distribution": RUNTIME_DISTRIBUTION_SCHEMA,
+    "yearly_aggregates": YEARLY_AGGREGATES_SCHEMA,
+    "year_genre_aggregates": YEAR_GENRE_AGGREGATES_SCHEMA,
 }
 
 # Configure logging for write to both file and console

@@ -47,13 +47,14 @@ def load_data(data_dict: dict[str, pl.DataFrame]) -> None:
 
 if __name__ == "__main__":
     import logging
+    from config import DATA_SCHEMA
 
     logging.info("Starting data load to BigQuery...")
     try:
-        movies_detailed_df = pl.read_csv(TRANSFORMED_FILEPATHS["MOVIES_DETAILED"])
-        runtime_distribution_df = pl.read_csv(TRANSFORMED_FILEPATHS["RUNTIME_DISTRIBUTION"])
-        yearly_aggregates_df = pl.read_csv(TRANSFORMED_FILEPATHS["YEARLY_AGGREGATES"])
-        year_genre_aggregates_df = pl.read_csv(TRANSFORMED_FILEPATHS["YEAR_GENRE_AGGREGATES"])
+        movies_detailed_df = pl.read_csv(TRANSFORMED_FILEPATHS["MOVIES_DETAILED"], schema_overrides=DATA_SCHEMA["movies_detailed"])
+        runtime_distribution_df = pl.read_csv(TRANSFORMED_FILEPATHS["RUNTIME_DISTRIBUTION"], schema_overrides=DATA_SCHEMA["runtime_distribution"])
+        yearly_aggregates_df = pl.read_csv(TRANSFORMED_FILEPATHS["YEARLY_AGGREGATES"], schema_overrides=DATA_SCHEMA["yearly_aggregates"])
+        year_genre_aggregates_df = pl.read_csv(TRANSFORMED_FILEPATHS["YEAR_GENRE_AGGREGATES"], schema_overrides=DATA_SCHEMA["year_genre_aggregates"])
 
         data_to_load = {
             "movies_detailed": movies_detailed_df,

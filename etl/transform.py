@@ -1,5 +1,6 @@
 import polars as pl
-from config import CURRENT_YEAR
+from config import CURRENT_YEAR, DATA_SCHEMA
+from utils.data_schema import apply_polars_schema
 
 def prepare_movies(df: pl.DataFrame) -> pl.DataFrame:
     df = df.filter(pl.col("titleType") == "movie")
@@ -30,6 +31,8 @@ def create_movies_detailed(movies_df: pl.DataFrame, ratings_df: pl.DataFrame) ->
     merged_df = merged_df.select(renamed_columns)
     merged_df = merged_df.rename({"num_votes": "total_votes"})
     
+    merged_df = apply_polars_schema(merged_df, DATA_SCHEMA["movies_detailed"])
+    
     return merged_df
 
 def create_runtime_distribution(movies_df: pl.DataFrame) -> pl.DataFrame:
@@ -56,6 +59,9 @@ def create_runtime_distribution(movies_df: pl.DataFrame) -> pl.DataFrame:
         pl.min("runtime_minutes").alias("min_runtime"),
         pl.max("runtime_minutes").alias("max_runtime")
     ]).sort("min_runtime")
+
+    runtime_dist_df = apply_polars_schema(runtime_dist_df, DATA_SCHEMA["runtime_distribution"])
+
     return runtime_dist_df
 
 def create_yearly_aggregates(movies_df: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
@@ -70,6 +76,8 @@ def create_yearly_aggregates(movies_df: pl.DataFrame) -> tuple[pl.DataFrame, pl.
         pl.mean("average_rating").round(2).alias("average_rating")
     ]).sort("release_year")
     
+    yearly_aggregates_df = apply_polars_schema(yearly_aggregates_df, DATA_SCHEMA["yearly_aggregates"])
+
     return yearly_aggregates_df, movies_year_df
 
 def create_year_genre_aggregates(movies_df: pl.DataFrame) -> pl.DataFrame:
@@ -82,6 +90,7 @@ def create_year_genre_aggregates(movies_df: pl.DataFrame) -> pl.DataFrame:
         pl.mean("average_rating").round(2).alias("average_rating"),
         pl.sum("total_votes").alias("total_votes")
     ]).sort(["release_year", "genre"])
+    year_genre_df = apply_polars_schema(year_genre_df, DATA_SCHEMA["year_genre_aggregates"])
     return year_genre_df
 
 def transform_data(data_dict: dict[str, pl.DataFrame]) -> dict[str, pl.DataFrame]:
@@ -89,6 +98,7 @@ def transform_data(data_dict: dict[str, pl.DataFrame]) -> dict[str, pl.DataFrame
     runtime_distribution_df = create_runtime_distribution(movies_detailed_df)
     yearly_aggregates_df, movies_year_df = create_yearly_aggregates(movies_detailed_df)
     year_genre_aggregates_df = create_year_genre_aggregates(movies_year_df)
+    
     return {
         "movies_detailed": movies_detailed_df,
         "runtime_distribution": runtime_distribution_df,
