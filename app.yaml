@@ -1,0 +1,42 @@
+name: imdb-etl-job
+region: sfo3
+jobs:
+  - name: imdb-daily-etl
+    image:
+      registry_type: DOCR
+      repository: alfredomg-projects/imdb-etl
+      tag: latest
+    instance_count: 1
+    instance_size_slug: basic-s
+    schedule: "0 4 * * *"
+    envs:
+      - key: DEBUG
+        scope: RUN_TIME
+        value: "FALSE"
+      - key: TYPE
+        scope: RUN_TIME
+        value: "service_account"
+      - key: PROJECT_ID
+        scope: RUN_TIME
+        value: "stock-market-analytics-app"
+      - key: AUTH_URI
+        scope: RUN_TIME
+        value: "https://accounts.google.com/o/oauth2/auth"
+      - key: TOKEN_URI
+        scope: RUN_TIME
+        value: "https://oauth2.googleapis.com/token"
+      - key: AUTH_PROVIDER_X509_CERT_URL
+        scope: RUN_TIME
+        value: "https://www.googleapis.com/oauth2/v1/certs"
+      - key: CLIENT_X509_CERT_URL
+        scope: RUN_TIME
+        value: "https://www.googleapis.com/robot/v1/metadata/x509/imdb-analytics%40stock-market-analytics-467701.iam.gserviceaccount.com"
+      - key: UNIVERSE_DOMAIN
+        scope: RUN_TIME
+        value: "googleapis.com"
+      - key: DATASET_ID
+        scope: RUN_TIME
+        value: "imdb_analytics_616"
+      - key: POSTGRES_DATABASE
+        scope: RUN_TIME
+        value: "imdb"
