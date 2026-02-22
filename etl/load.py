@@ -1,64 +1,49 @@
 import logging
 import polars as pl
-from google.cloud import bigquery
 from config import (
-    GOOGLE_CLOUD_CREDENTIALS, DATASET_ID, WRITE_DISPOSITION,
-    TRANSFORMED_FILEPATHS, MOVIES_DETAILS_TABLE_ID, RUNTIME_DISTRIBUTION_TABLE_ID,
-    YEARLY_AGGREGATES_TABLE_ID, YEAR_GENRE_AGGREGATES_TABLE_ID
+    GOOGLE_CLOUD_CREDENTIALS, BIGQUERY_CONF,
+    POSTGRES_CONF, TRANSFORMED_FILEPATHS,
 )
 from utils.bigquery import load_df_to_bigquery, create_dataset
 from utils.google_cloud_client import get_bigquery_client
-
-def load_to_bigquery(
-    df: pl.DataFrame, 
-    project_id: str, 
-    dataset_id: str, 
-    table_id: str,
-    google_cloud_client: bigquery.Client,
-) -> None:
-    """
-    Loads transformed data into BigQuery.
-    
-    Args:
-        df (pl.DataFrame): Transformed data to load
-        project_id (str): Google Cloud project ID
-        dataset_id (str): BigQuery dataset ID
-        table_id (str): BigQuery table ID
-        google_cloud_client (bigquery.Client): Authenticated BigQuery client instance
-    
-    Returns:
-        None
-    """
-    try:
-        # Create dataset if it doesn't exist
-        create_dataset(google_cloud_client, dataset_id)
-        
-        # Construct full table ID
-        full_table_id = f"{project_id}.{dataset_id}.{table_id}"
-        
-        # Load data to BigQuery
-        logging.info(f"Loading {len(df)} rows to {full_table_id}")
-        load_df_to_bigquery(df, full_table_id, google_cloud_client, WRITE_DISPOSITION)
-        logging.info(f"Successfully loaded data to {full_table_id}")
-        
-    except Exception as e:
-        logging.error(f"Error loading data to BigQuery: {e}")
-        raise
+from utils.postgresql import load_df_to_postgresql
 
 def load_data(data_dict: dict[str, pl.DataFrame]) -> None:
-    """
-    Loads multiple DataFrames to different BigQuery tables.
-    
-    Args:
-        data_dict (dict): Dictionary with table names as keys and DataFrames as values
-    
-    Returns:
-        None
-    """
+    """ Loads transformed data to BigQuery and PostgreSQL based on configuration. """
+
+    # Init BigQuery client and create dataset if it doesn't exist
+    bg_client = get_bigquery_client(GOOGLE_CLOUD_CREDENTIALS)
+    create_dataset(bg_client, BIGQUERY_CONF["dataset_id"])
+
+    # Get values from config dicts
     project_id = GOOGLE_CLOUD_CREDENTIALS.get("project_id")
-    for table_name, df in data_dict.items():
-        google_cloud_client = get_bigquery_client(GOOGLE_CLOUD_CREDENTIALS)
-        load_to_bigquery(df, project_id, DATASET_ID, table_name, google_cloud_client)
+    dataset_id = BIGQUERY_CONF["dataset_id"]
+    bg_tables = BIGQUERY_CONF["table_ids"]
+    bg_write_disposition = BIGQUERY_CONF["write_disposition"]
+    
+    pg_uri = POSTGRES_CONF["uri"]
+    pg_database = POSTGRES_CONF["database"]
+    pg_tables = POSTGRES_CONF["table_names"]
+    pg_driver = POSTGRES_CONF["driver"]
+    pg_write_disposition = POSTGRES_CONF["write_disposition"]
+    
+    for table, df in data_dict.items():
+        try:
+            if table in bg_tables:
+                table_name = bg_tables[table]
+                full_table_id = f"{project_id}.{dataset_id}.{table_name}"
+                logging.info(f"Loading {len(df)} records to BigQuery -> {full_table_id}")
+                load_df_to_bigquery(df, full_table_id, bg_client, write_disposition=bg_write_disposition)
+            if table in pg_tables:
+                table_name = pg_tables[table]
+                full_table_name = f"{pg_database}.{table_name}"
+                logging.info(f"Loading {len(df)} records to PostgreSQL -> {full_table_name}")
+                load_df_to_postgresql(df, full_table_name, pg_uri, pg_driver, write_disposition=pg_write_disposition)
+            else:
+                logging.warning(f"Table {table} not found in configuration dictionaries. Skipping load for this table.")
+        except Exception as e:
+            logging.error(f"Failed to load data for table {table}: {str(e)}")
+            raise e
 
 if __name__ == "__main__":
     import logging
@@ -71,15 +56,13 @@ if __name__ == "__main__":
         year_genre_aggregates_df = pl.read_csv(TRANSFORMED_FILEPATHS["YEAR_GENRE_AGGREGATES"])
 
         data_to_load = {
-            MOVIES_DETAILS_TABLE_ID: movies_detailed_df,
-            RUNTIME_DISTRIBUTION_TABLE_ID: runtime_distribution_df,
-            YEARLY_AGGREGATES_TABLE_ID: yearly_aggregates_df,
-            YEAR_GENRE_AGGREGATES_TABLE_ID: year_genre_aggregates_df,
+            "movies_detailed": movies_detailed_df,
+            "runtime_distribution": runtime_distribution_df,
+            "yearly_aggregates": yearly_aggregates_df,
+            "year_genre_aggregates": year_genre_aggregates_df,
         }
         load_data(data_to_load)
         
-        logging.info("Data load to BigQuery completed successfully.")
+        logging.info("Data load completed.")
     except Exception as e:
-        logging.error(f"Data load to BigQuery failed: {str(e)}")
-
-
+        logging.error(f"Data load failed: {str(e)}")

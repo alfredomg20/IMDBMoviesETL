@@ -33,15 +33,23 @@ def create_movies_detailed(movies_df: pl.DataFrame, ratings_df: pl.DataFrame) ->
     return merged_df
 
 def create_runtime_distribution(movies_df: pl.DataFrame) -> pl.DataFrame:
+    # Filter relevant data
     runtime_dist_df = movies_df.select([
         "runtime_minutes", "average_rating"
     ]).filter(pl.col("runtime_minutes").is_not_null())
+    
+    # Create runtime bins
     bins = [i for i in range(0, 241, 30)]
     labels = [f"< {bins[0]}"]  # First label for values below first bin
     labels.extend([f"{bins[i]+1}-{bins[i+1]}" for i in range(len(bins)-1)])  # Middle labels
     labels.append(f">{bins[-1]}")  # Last label for values >= last bin
+    
+    # Bin runtime_minutes and calculate aggregates
     runtime_dist_df = runtime_dist_df.with_columns(
-        pl.col("runtime_minutes").cut(bins, labels=labels, include_breaks=False).alias("runtime_bin")
+        pl.col("runtime_minutes")
+        .cut(bins, labels=labels, include_breaks=False)
+        .alias("runtime_bin")
+        .cast(pl.String)
     ).group_by("runtime_bin").agg([
         pl.len().alias("total_movies"),
         pl.mean("average_rating").round(2).alias("average_rating"),

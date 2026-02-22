@@ -50,13 +50,28 @@ GOOGLE_CLOUD_CREDENTIALS = {
     "universe_domain": os.getenv("UNIVERSE_DOMAIN"),
 }
 
-PROJECT_ID = os.getenv("PROJECT_ID")
-DATASET_ID = os.getenv("DATASET_ID")
-MOVIES_DETAILS_TABLE_ID = os.getenv("MOVIES_DETAILS_TABLE_ID")
-RUNTIME_DISTRIBUTION_TABLE_ID = os.getenv("RUNTIME_DISTRIBUTION_TABLE_ID")
-YEAR_GENRE_AGGREGATES_TABLE_ID = os.getenv("YEAR_GENRE_AGGREGATES_TABLE_ID")
-YEARLY_AGGREGATES_TABLE_ID = os.getenv("YEARLY_AGGREGATES_TABLE_ID")
-WRITE_DISPOSITION = os.getenv("WRITE_DISPOSITION", "WRITE_TRUNCATE")
+# BigQuery configuration
+BIGQUERY_CONF = {
+    "dataset_id": os.getenv("DATASET_ID"),
+    "table_ids": {
+        "movies_detailed": os.getenv("MOVIES_DETAILS_TABLE", "movies_detailed"),
+    },
+    "write_disposition": os.getenv("BIGQUERY_WRITE_DISPOSITION", "WRITE_TRUNCATE"),
+}
+
+# PostgreSQL configuration
+POSTGRES_CONF = {
+    "uri": os.getenv("POSTGRES_URI"),
+    "database": os.getenv("POSTGRES_DATABASE"),
+    "table_names": {
+        "movies_detailed": os.getenv("MOVIES_DETAILS_TABLE", "movies_detailed"),
+        "runtime_distribution": os.getenv("RUNTIME_DISTRIBUTION_TABLE", "runtime_distribution"),
+        "yearly_aggregates": os.getenv("YEARLY_AGGREGATES_TABLE", "yearly_aggregates"),
+        "year_genre_aggregates": os.getenv("YEAR_GENRE_AGGREGATES_TABLE", "year_genre_aggregates")
+    },
+    "write_disposition": os.getenv("POSTGRES_WRITE_DISPOSITION", "append"),
+    "driver": os.getenv("POSTGRES_DRIVER", "adbc")
+}
 
 # Configure logging for write to both file and console
 logging.basicConfig(
