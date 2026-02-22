@@ -2,7 +2,7 @@ import logging
 import polars as pl
 from google.cloud import bigquery
 from config import (
-    GOOGLE_CLOUD_CREDENTIALS, PROJECT_ID, DATASET_ID, WRITE_DISPOSITION,
+    GOOGLE_CLOUD_CREDENTIALS, DATASET_ID, WRITE_DISPOSITION,
     TRANSFORMED_FILEPATHS, MOVIES_DETAILS_TABLE_ID, RUNTIME_DISTRIBUTION_TABLE_ID,
     YEARLY_AGGREGATES_TABLE_ID, YEAR_GENRE_AGGREGATES_TABLE_ID
 )
@@ -55,9 +55,10 @@ def load_data(data_dict: dict[str, pl.DataFrame]) -> None:
     Returns:
         None
     """
+    project_id = GOOGLE_CLOUD_CREDENTIALS.get("project_id")
     for table_name, df in data_dict.items():
-        google_cloud_client = get_bigquery_client(GOOGLE_CLOUD_CREDENTIALS, PROJECT_ID)
-        load_to_bigquery(df, PROJECT_ID, DATASET_ID, table_name, google_cloud_client)
+        google_cloud_client = get_bigquery_client(GOOGLE_CLOUD_CREDENTIALS)
+        load_to_bigquery(df, project_id, DATASET_ID, table_name, google_cloud_client)
 
 if __name__ == "__main__":
     import logging
