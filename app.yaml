@@ -2,10 +2,10 @@ name: imdb-etl-job
 region: sfo3
 jobs:
   - name: imdb-daily-etl
-    image:
-      registry_type: DOCR
-      repository: alfredomg-projects/imdb-etl
-      tag: latest
+    git:
+        repo_clone_url: https://github.com/alfredomg20/IMDBMoviesETL
+        branch: main
+        dockerfile_path: Dockerfiles
     instance_count: 1
     instance_size_slug: basic-s
     schedule: "0 4 * * *"
@@ -28,9 +28,6 @@ jobs:
       - key: AUTH_PROVIDER_X509_CERT_URL
         scope: RUN_TIME
         value: "https://www.googleapis.com/oauth2/v1/certs"
-      - key: CLIENT_X509_CERT_URL
-        scope: RUN_TIME
-        value: "https://www.googleapis.com/robot/v1/metadata/x509/imdb-analytics%40stock-market-analytics-467701.iam.gserviceaccount.com"
       - key: UNIVERSE_DOMAIN
         scope: RUN_TIME
         value: "googleapis.com"
