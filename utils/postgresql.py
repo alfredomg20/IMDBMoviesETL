@@ -8,6 +8,7 @@ def load_df_to_postgresql(df: pl.DataFrame, table_name: str, uri: str, engine: s
         with dbapi.connect(uri) as conn:
             with conn.cursor() as cursor:
                 cursor.execute(f"TRUNCATE TABLE {table_name} RESTART IDENTITY CASCADE;")
+            conn.commit()
         if_table_exists = "append"
     elif write_disposition.lower() == "replace":
         if_table_exists = "replace"
