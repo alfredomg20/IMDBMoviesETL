@@ -70,7 +70,7 @@ POSTGRES_CONF = {
         "yearly_aggregates": os.getenv("YEARLY_AGGREGATES_TABLE", "yearly_aggregates"),
         "year_genre_aggregates": os.getenv("YEAR_GENRE_AGGREGATES_TABLE", "year_genre_aggregates")
     },
-    "write_disposition": os.getenv("POSTGRES_WRITE_DISPOSITION", "append"),
+    "write_disposition": os.getenv("POSTGRES_WRITE_DISPOSITION", "truncate"),
     "driver": os.getenv("POSTGRES_DRIVER", "adbc")
 }
 
